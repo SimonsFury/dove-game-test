@@ -1,221 +1,230 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
+<head>
 <meta name="robots" content="noindex, nofollow">
-		<meta charset="utf-8">
-		<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0">
-		<title>Flight of the Dove</title>
-		<style>
-html, body, #canvas {
-	margin: 0;
-	padding: 0;
-	border: 0;
-}
-
-body {
-	color: white;
-	background-color: black;
-	overflow: hidden;
-	touch-action: none;
-}
-
-#canvas {
-	display: block;
-}
-
-#canvas:focus {
-	outline: none;
-}
-
-#status, #status-splash, #status-progress {
-	position: absolute;
-	left: 0;
-	right: 0;
-}
-
-#status, #status-splash {
-	top: 0;
-	bottom: 0;
-}
-
-#status {
-	background-color: #070c18;
-	display: flex;
-	flex-direction: column;
-	justify-content: center;
-	align-items: center;
-	visibility: hidden;
-}
-
-#status-splash {
-	max-height: 100%;
-	max-width: 100%;
-	margin: auto;
-}
-
-#status-splash.show-image--false {
-	display: none;
-}
-
-#status-splash.fullsize--true {
-	height: 100%;
-	width: 100%;
-	object-fit: contain;
-}
-
-#status-splash.use-filter--false {
-	image-rendering: pixelated;
-}
-
-#status-progress, #status-notice {
-	display: none;
-}
-
-#status-progress {
-	bottom: 10%;
-	width: 50%;
-	margin: 0 auto;
-}
-
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0">
+<title>Flight of the Dove</title>
+<style>
+html, body, #canvas { margin: 0; padding: 0; border: 0; }
+body { color: white; background-color: black; overflow: hidden; touch-action: none; }
+#canvas { display: block; }
+#canvas:focus { outline: none; }
+/* The loading screen: the game's start screen with the flood sinking, drawn from pictures of
+   the game (tools/make_intro.py) until the game itself takes over at the same moment. */
+#intro { position: fixed; left: 0; top: 0; width: 100%; height: 100%; z-index: 1; transition: opacity 0.35s linear; }
 #status-notice {
-	background-color: #5b3943;
-	border-radius: 0.5rem;
-	border: 1px solid #9b3943;
-	color: #e0e0e0;
-	font-family: 'Noto Sans', 'Droid Sans', Arial, sans-serif;
-	line-height: 1.3;
-	margin: 0 2rem;
-	overflow: hidden;
-	padding: 1rem;
-	text-align: center;
-	z-index: 1;
+	display: none; position: fixed; left: 2rem; right: 2rem; top: 40%; z-index: 2;
+	background-color: #5b3943; border-radius: 0.5rem; border: 1px solid #9b3943; color: #e0e0e0;
+	font-family: 'Noto Sans', 'Droid Sans', Arial, sans-serif; line-height: 1.3; padding: 1rem; text-align: center;
 }
-		</style>
-		<link id="-gd-engine-icon" rel="icon" type="image/png" href="index.icon.png" />
+</style>
+<link id="-gd-engine-icon" rel="icon" type="image/png" href="index.icon.png" />
 <link rel="apple-touch-icon" href="index.apple-touch-icon.png"/>
 
-	</head>
-	<body>
-		<canvas id="canvas">
-			Your browser does not support the canvas tag.
-		</canvas>
+</head>
+<body>
+<canvas id="canvas">Your browser does not support the canvas tag.</canvas>
+<canvas id="intro"></canvas>
+<noscript>Your browser does not support JavaScript.</noscript>
+<div id="status-notice"></div>
 
-		<noscript>
-			Your browser does not support JavaScript.
-		</noscript>
+<script>
+// The loading screen. The game reads window.doveIntro ({p: how far the water has sunk, t: the
+// screen's clock}) when it starts, draws the same moment, and calls window.doveIntroReady;
+// then this picture fades out over the game's own (the same scene, moving on together).
+(function () {
+	const I = {"bob":5.0,"giraffe":[134.14306640625,620.857116699219,1.14285714285714],"light":"dbdeeb","logo":[30.0,120.0,660.0,173.33333333333334],"pivot":[-660.0,1430.0],"pixels":[1080,2700],"rise":200.0,"rock":0.012,"scene_y":340.0,"sky":"1a2030","sway_fps":6.0,"text":{"de":"Das Wasser sinkt \u2026 {p} %","en":"The waters are going down \u2026 {p}%"},"view":[720,1800],"layers":{"back":[0,0,720.0,1800.0],"ark":[0.0,710.0,684.6666666666666,798.0],"sea":[0.0,1370.6666666666667,720.0,429.3333333333333],"front":[0.0,0.0,720.0,357.3333333333333]},"sea_bottom":"#0c1c2c","giraffe_size":[174.0,258.0],"font":["font.woff2","woff2"]};
+	const canvas = document.getElementById('intro');
+	if (!I) { canvas.remove(); return; }
+	const ctx = canvas.getContext('2d');
+	const MIN_TIME = 1.4; // The water takes at least this long to sink to the game's part.
+	const images = {};
+	const picture = (name) => { const im = new Image(); im.decoding = 'async'; im.onerror = () => { im.failed = true; }; im.src = 'intro-' + name; images[name] = im; };
+	['back.webp', 'ark.webp', 'sea.webp', 'front.webp', 'logo.webp'].forEach(picture);
+	for (let n = 0; n < 8; n++) picture('giraffe-' + n + '.webp');
+	let fontReady = false;
+	try {
+		const font = new FontFace('DoveIntro', 'url(intro-' + I.font[0] + ') format("' + I.font[1] + '")');
+		font.load().then((f) => { document.fonts.add(f); fontReady = true; }).catch(() => {});
+	} catch (e) { /* An old browser draws the line in its own font. */ }
+	const plain = /[?&]trip=[1-9]/.test(window.location.search);
+	const lang = (navigator.language || 'en').toLowerCase().startsWith('de') ? 'de' : 'en';
+	const start = performance.now();
+	let shown = 0;
+	let handed = null; // {p, at}: the game has taken over (the last part sinks as in main.gd).
+	const state = {download: 0, started: false};
+	window.doveIntro = {p: 0, t: 0};
+	window.doveIntroState = state;
 
-		<div id="status">
-			<img id="status-splash" class="show-image--false fullsize--true use-filter--true" src="index.png" alt="">
-			<progress id="status-progress"></progress>
-			<div id="status-notice"></div>
-		</div>
+	window.doveIntroReady = function (info) {
+		if (!info || !info.on) { canvas.remove(); running = false; return; }
+		handed = {p: info.p, at: (performance.now() - start) / 1000};
+		canvas.style.opacity = '0';
+		setTimeout(() => { canvas.remove(); running = false; }, 450);
+	};
 
-		<script src="index.js"></script>
-		<script>
-const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","mainPack":"game-4dec7d4e6beb41de.pck","experimentalVK":false,"fileSizes":{"game-4dec7d4e6beb41de.pck":8357432,"index.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+	const ready = (im) => im && im.complete && im.naturalWidth > 0;
+
+	function progress(t) {
+		if (handed) { // The same rule as main.gd intro_progress().
+			const settle = 0.5 + 1.5 * (1 - handed.p);
+			const k = Math.min(Math.max((t - handed.at) / settle, 0), 1);
+			return handed.p + (1 - handed.p) * (1 - (1 - k) * (1 - k));
+		}
+		let real = 0.8 * state.download;
+		if (state.started) real = Math.max(real, 0.85);
+		if (typeof window.doveBoot === 'number') real = Math.max(real, 0.85 + 0.07 * window.doveBoot);
+		shown = Math.max(shown, Math.min(real, t / MIN_TIME));
+		return shown;
+	}
+
+	function draw() {
+		const dpr = window.devicePixelRatio || 1;
+		const W = window.innerWidth, H = window.innerHeight;
+		if (canvas.width !== Math.round(W * dpr) || canvas.height !== Math.round(H * dpr)) {
+			canvas.width = Math.round(W * dpr);
+			canvas.height = Math.round(H * dpr);
+			canvas.style.width = W + 'px';
+			canvas.style.height = H + 'px';
+		}
+		// The game's stretch rule (keep_width): 720 units wide, taller screens see more.
+		let s, ox = 0, vh;
+		if (W / H > 720 / 1280) { s = H / 1280; ox = (W - 720 * s) / 2; vh = 1280; }
+		else { s = W / 720; vh = H / s; }
+		let t = (performance.now() - start) / 1000;
+		let p = progress(t);
+		if (handed && Array.isArray(window.doveIntroNow)) { // Fading out: the game's own moment.
+			p = window.doveIntroNow[0];
+			t = window.doveIntroNow[1];
+		}
+		window.doveIntro = {p: p, t: t};
+		ctx.setTransform(1, 0, 0, 1, 0, 0);
+		ctx.fillStyle = '#000';
+		ctx.fillRect(0, 0, canvas.width, canvas.height);
+		ctx.setTransform(dpr * s, 0, 0, dpr * s, dpr * ox, 0);
+		ctx.save();
+		ctx.beginPath();
+		ctx.rect(0, 0, 720, vh);
+		ctx.clip();
+		ctx.fillStyle = '#' + I.sky;
+		ctx.fillRect(0, 0, 720, vh);
+		if (!Object.values(images).every((im) => ready(im) || im.failed)) { ctx.restore(); return; } // The plain sky until every picture is in (no piecemeal start).
+		// Stage test links (?trip=N) start in other weather: the game draws that scene itself.
+		if (plain) { ctx.restore(); drawTop(p, vh); return; }
+		const dy = Math.max(vh - 1280, 0) / 2 + 80 - I.scene_y; // The start screen sits 80 higher (TITLE_RAISE).
+		const rise = I.rise * (1 - p);
+		const L = I.layers;
+		const at = (name, y) => { if (ready(images[name + '.webp'])) ctx.drawImage(images[name + '.webp'], L[name][0], L[name][1] + y, L[name][2], L[name][3]); };
+		at('back', dy - rise);
+		// The ark rides the water: it bobs and rocks about a point on the water line (ark_pose).
+		const px = I.pivot[0], py = I.pivot[1] + dy - rise;
+		ctx.save();
+		ctx.translate(px, py + Math.sin(t * 1.4) * I.bob);
+		ctx.rotate(Math.sin(t * 1.1 + 0.6) * I.rock);
+		ctx.translate(-px, -py);
+		at('ark', dy - rise);
+		const giraffe = images['giraffe-' + (Math.floor(t * I.sway_fps) % 8) + '.webp'];
+		if (ready(giraffe)) ctx.drawImage(giraffe, I.giraffe[0], I.giraffe[1] + dy - rise, I.giraffe_size[0], I.giraffe_size[1]);
+		ctx.restore();
+		at('sea', dy - rise);
+		const seaEnd = L.sea[1] + L.sea[3] + dy - rise - 1;
+		if (seaEnd < vh) { ctx.fillStyle = I.sea_bottom; ctx.fillRect(0, seaEnd, 720, vh - seaEnd); }
+		at('front', dy);
+		// Light rain (draw_rain).
+		ctx.strokeStyle = 'rgba(209, 219, 242, 0.2)';
+		ctx.lineWidth = 1.5;
+		ctx.beginPath();
+		for (let i = 0; i < 70; i++) {
+			const x = ((((i * 7919) % 1000) * 0.72 - 60 * t) % 760 + 760) % 760 - 20;
+			const y = (((i * 104729) % 1000) * 1.6 + 520 * t) % vh;
+			ctx.moveTo(x, y);
+			ctx.lineTo(x - 6, y + 26);
+		}
+		ctx.stroke();
+		// The vignette (draw_vignette).
+		const band = (x0, y0, x1, y1, a0, a1) => {
+			const g = ctx.createLinearGradient(x0, y0, x1, y1);
+			g.addColorStop(0, 'rgba(10, 15, 26, ' + a0 + ')');
+			g.addColorStop(1, 'rgba(10, 15, 26, ' + a1 + ')');
+			ctx.fillStyle = g;
+			ctx.fillRect(Math.min(x0, x1), Math.min(y0, y1), Math.max(Math.abs(x1 - x0), x0 === x1 ? 720 : 0), Math.max(Math.abs(y1 - y0), y0 === y1 ? vh : 0));
+		};
+		band(0, 0, 0, 200, 0.3, 0);
+		band(0, vh - 320, 0, vh, 0, 0.45);
+		band(0, 0, 40, 0, 0.12, 0.05);
+		band(40, 0, 180, 0, 0.05, 0);
+		band(720, 0, 680, 0, 0.12, 0.05);
+		band(680, 0, 540, 0, 0.05, 0);
+		ctx.restore();
+		drawTop(p, vh);
+	}
+
+	// The logo and the line, where the game's title screen has them.
+	function drawTop(p, vh) {
+		if (ready(images['logo.webp'])) ctx.drawImage(images['logo.webp'], I.logo[0], I.logo[1], I.logo[2], I.logo[3]);
+		ctx.font = '28px ' + (fontReady ? 'DoveIntro' : 'sans-serif');
+		ctx.textAlign = 'center';
+		ctx.textBaseline = 'middle';
+		ctx.fillStyle = '#E8EEF8';
+		ctx.fillText(I.text[lang].replace('{p}', Math.round(p * 100)), 360, vh * 0.88);
+	}
+
+	let running = true;
+	function frame() {
+		if (!running) return;
+		draw();
+		requestAnimationFrame(frame);
+	}
+	frame();
+}());
+</script>
+<script src="index.js"></script>
+<script>
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","mainPack":"game-23ba017a313f7452.pck","experimentalVK":false,"fileSizes":{"game-23ba017a313f7452.pck":8357672,"index.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
 const GODOT_THREADS_ENABLED = false;
 const engine = new Engine(GODOT_CONFIG);
 
 (function () {
-	const statusOverlay = document.getElementById('status');
-	const statusProgress = document.getElementById('status-progress');
 	const statusNotice = document.getElementById('status-notice');
-
-	let initializing = true;
-	let statusMode = '';
-
-	function setStatusMode(mode) {
-		if (statusMode === mode || !initializing) {
-			return;
-		}
-		if (mode === 'hidden') {
-			statusOverlay.remove();
-			initializing = false;
-			return;
-		}
-		statusOverlay.style.visibility = 'visible';
-		statusProgress.style.display = mode === 'progress' ? 'block' : 'none';
-		statusNotice.style.display = mode === 'notice' ? 'block' : 'none';
-		statusMode = mode;
-	}
-
-	function setStatusNotice(text) {
-		while (statusNotice.lastChild) {
-			statusNotice.removeChild(statusNotice.lastChild);
-		}
-		const lines = text.split('\n');
-		lines.forEach((line) => {
-			statusNotice.appendChild(document.createTextNode(line));
-			statusNotice.appendChild(document.createElement('br'));
-		});
-	}
+	const intro = window.doveIntroState || {};
 
 	function displayFailureNotice(err) {
 		console.error(err);
-		if (err instanceof Error) {
-			setStatusNotice(err.message);
-		} else if (typeof err === 'string') {
-			setStatusNotice(err);
-		} else {
-			setStatusNotice('An unknown error occurred.');
-		}
-		setStatusMode('notice');
-		initializing = false;
+		const text = err instanceof Error ? err.message : typeof err === 'string' ? err : 'An unknown error occurred.';
+		while (statusNotice.lastChild) statusNotice.removeChild(statusNotice.lastChild);
+		text.split('\n').forEach((line) => {
+			statusNotice.appendChild(document.createTextNode(line));
+			statusNotice.appendChild(document.createElement('br'));
+		});
+		statusNotice.style.display = 'block';
 	}
 
-	const missing = Engine.getMissingFeatures({
-		threads: GODOT_THREADS_ENABLED,
-	});
-
+	const missing = Engine.getMissingFeatures({threads: GODOT_THREADS_ENABLED});
 	if (missing.length !== 0) {
 		if (GODOT_CONFIG['serviceWorker'] && GODOT_CONFIG['ensureCrossOriginIsolationHeaders'] && 'serviceWorker' in navigator) {
-			let serviceWorkerRegistrationPromise;
+			let registration;
 			try {
-				serviceWorkerRegistrationPromise = navigator.serviceWorker.getRegistration();
+				registration = navigator.serviceWorker.getRegistration();
 			} catch (err) {
-				serviceWorkerRegistrationPromise = Promise.reject(new Error('Service worker registration failed.'));
+				registration = Promise.reject(new Error('Service worker registration failed.'));
 			}
-			// There's a chance that installing the service worker would fix the issue
 			Promise.race([
-				serviceWorkerRegistrationPromise.then((registration) => {
-					if (registration != null) {
-						return Promise.reject(new Error('Service worker already exists.'));
-					}
-					return registration;
-				}).then(() => engine.installServiceWorker()),
-				// For some reason, `getRegistration()` can stall
-				new Promise((resolve) => {
-					setTimeout(() => resolve(), 2000);
-				}),
-			]).then(() => {
-				// Reload if there was no error.
-				window.location.reload();
-			}).catch((err) => {
-				console.error('Error while registering service worker:', err);
-			});
+				registration.then((r) => (r != null ? Promise.reject(new Error('Service worker already exists.')) : r)).then(() => engine.installServiceWorker()),
+				new Promise((resolve) => setTimeout(() => resolve(), 2000)),
+			]).then(() => window.location.reload()).catch((err) => console.error('Error while registering service worker:', err));
 		} else {
-			// Display the message as usual
-			const missingMsg = 'Error\nThe following features required to run Godot projects on the Web are missing:\n';
-			displayFailureNotice(missingMsg + missing.join('\n'));
+			displayFailureNotice('Error\nThe following features required to run Godot projects on the Web are missing:\n' + missing.join('\n'));
 		}
 	} else {
-		setStatusMode('progress');
 		engine.startGame({
 			'onProgress': function (current, total) {
-				if (current > 0 && total > 0) {
-					statusProgress.value = current;
-					statusProgress.max = total;
-				} else {
-					statusProgress.removeAttribute('value');
-					statusProgress.removeAttribute('max');
-				}
+				if (current > 0 && total > 0) intro.download = current / total;
 			},
-		}).then(() => {
-			setStatusMode('hidden');
-		}, displayFailureNotice);
+		}).then(() => { intro.started = true; }, displayFailureNotice);
 	}
 }());
-		</script>
-	</body>
+</script>
+</body>
 </html>
 
