@@ -4,7 +4,7 @@
 <meta name="robots" content="noindex, nofollow">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0">
-<title>Flight of the Dove</title>
+<title>Restless Dove</title>
 <style>
 html, body, #canvas { margin: 0; padding: 0; border: 0; }
 body { color: white; background-color: black; overflow: hidden; touch-action: none; }
@@ -34,7 +34,7 @@ body { color: white; background-color: black; overflow: hidden; touch-action: no
 // screen's clock}) when it starts, draws the same moment, and calls window.doveIntroReady;
 // then this picture fades out over the game's own (the same scene, moving on together).
 (function () {
-	const I = {"bob":5.0,"logo":[30.0,120.0,660.0,173.33333333333334],"pivot":[-660.0,1430.0],"pixels":[1080,2700],"rise":200.0,"rock":0.012,"scene_y":340.0,"sky":"3a3557","text":{"de":"Das Wasser sinkt \u2026 {p} %","en":"The waters are going down \u2026 {p}%"},"view":[720,1800],"layers":{"back":[0,0,720.0,1800.0],"ark":[0.0,628.0,684.6666666666666,880.0],"sea":[0.0,1370.6666666666667,720.0,429.3333333333333],"front":[0.0,0.0,720.0,357.3333333333333]},"sea_bottom":"#202e3a","font":["font.woff2","woff2"],"files":["back.webp","ark.webp","sea.webp","front.webp","logo.webp","font.woff2"]};
+	const I = {"bob":5.0,"logo":[110.0,120.0,500.0,220.0],"pivot":[-660.0,1430.0],"pixels":[1080,2700],"rise":200.0,"rock":0.012,"scene_y":340.0,"sky":"3a3557","text":{"de":"Das Wasser sinkt \u2026 {p} %","en":"The waters are going down \u2026 {p}%"},"view":[720,1800],"layers":{"back":[0,0,720.0,1800.0],"ark":[0.0,628.0,684.6666666666666,880.0],"sea":[0.0,1370.6666666666667,720.0,429.3333333333333],"front":[0.0,0.0,720.0,357.3333333333333]},"sea_bottom":"#202e3a","font":["font.woff2","woff2"],"files":["back.webp","ark.webp","sea.webp","front.webp","logo.webp","font.woff2"]};
 	const canvas = document.getElementById('intro');
 	if (!I) { canvas.remove(); return; }
 	const ctx = canvas.getContext('2d');
@@ -178,7 +178,7 @@ body { color: white; background-color: black; overflow: hidden; touch-action: no
 </script>
 <script src="index.js"></script>
 <script>
-const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","mainPack":"game-f289be02c41ccfa2.pck","experimentalVK":false,"fileSizes":{"game-f289be02c41ccfa2.pck":17250656,"index.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","mainPack":"game-3863067dd054845c.pck","experimentalVK":false,"fileSizes":{"game-3863067dd054845c.pck":18498288,"index.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
 const GODOT_THREADS_ENABLED = false;
 const engine = new Engine(GODOT_CONFIG);
 
