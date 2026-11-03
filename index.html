@@ -36,7 +36,7 @@ body { color: white; background-color: black; overflow: hidden; touch-action: no
 // watches its frames: when they keep coming slow, it draws a smaller picture (down to MIN_SCALE),
 // which a weak graphics chip handles in time. A quick check after load can say ?scale=0.6.
 (function () {
-	const MAX_TALL = 1600, MIN_SCALE = 0.55, STEP = 0.85;
+	const MAX_TALL = 1600, MIN_SCALE = 0.75, STEP = 0.9; // Below 0.75 it looked blurry (Simon, 3 Nov).
 	const real = window.devicePixelRatio || 1;
 	const asked = parseFloat(new URLSearchParams(location.search).get('scale'));
 	let scale = asked > 0 ? Math.min(asked, 1) : 1;
@@ -215,7 +215,7 @@ body { color: white; background-color: black; overflow: hidden; touch-action: no
 </script>
 <script src="index.js"></script>
 <script>
-const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","mainPack":"game-d36ca1581122b3a9.pck","experimentalVK":false,"fileSizes":{"game-d36ca1581122b3a9.pck":20762600,"index.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","mainPack":"game-646526994578a7df.pck","experimentalVK":false,"fileSizes":{"game-646526994578a7df.pck":20763080,"index.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
 const GODOT_THREADS_ENABLED = false;
 const engine = new Engine(GODOT_CONFIG);
 
