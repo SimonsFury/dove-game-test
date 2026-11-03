@@ -30,14 +30,39 @@ body { color: white; background-color: black; overflow: hidden; touch-action: no
 <div id="status-notice"></div>
 
 <script>
-// Big screens (Simon's 4K monitor, 3 Nov): the game draws at most MAX_TALL real pixels tall and the
-// browser scales the picture up. Godot sizes its canvas from devicePixelRatio, so it reads the
-// capped value; at 4K this draws less than half the pixels and the frame drops go.
+// The picture's size (Simon, 3 Nov: frame drops on a laptop with Intel graphics). The game draws
+// at most MAX_TALL real pixels tall, and the browser scales the picture up. Godot sizes its canvas
+// from devicePixelRatio, so it reads the value worked out here. While the game runs, the page
+// watches its frames: when they keep coming slow, it draws a smaller picture (down to MIN_SCALE),
+// which a weak graphics chip handles in time. A quick check after load can say ?scale=0.6.
 (function () {
-	const MAX_TALL = 1600;
+	const MAX_TALL = 1600, MIN_SCALE = 0.55, STEP = 0.85;
 	const real = window.devicePixelRatio || 1;
-	const capped = () => Math.min(real, MAX_TALL / Math.max(window.innerHeight, 1));
-	try { Object.defineProperty(window, 'devicePixelRatio', {get: capped, configurable: true}); } catch (e) {}
+	const asked = parseFloat(new URLSearchParams(location.search).get('scale'));
+	let scale = asked > 0 ? Math.min(asked, 1) : 1;
+	const ratio = () => Math.min(real, MAX_TALL / Math.max(window.innerHeight, 1)) * scale;
+	try { Object.defineProperty(window, 'devicePixelRatio', {get: ratio, configurable: true}); } catch (e) { return; }
+	if (asked > 0) return;
+	let gaps = [], last = 0, started = 0;
+	const watch = (now) => {
+		if (document.visibilityState === 'visible' && window.doveIntroDone) {
+			if (!started) started = now;
+			if (last && now - started > 3000) gaps.push(now - last); // Not the first moments of play.
+			if (gaps.length >= 120) {
+				gaps.sort((a, b) => a - b);
+				if (gaps[60] > 20 && scale > MIN_SCALE) { // Most frames too slow for 60 per second.
+					scale = Math.max(scale * STEP, MIN_SCALE);
+					window.dispatchEvent(new Event('resize'));
+				}
+				gaps = [];
+			}
+		} else {
+			gaps = [];
+		}
+		last = now;
+		requestAnimationFrame(watch);
+	};
+	requestAnimationFrame(watch);
 })();
 </script>
 <script>
@@ -68,6 +93,7 @@ body { color: white; background-color: black; overflow: hidden; touch-action: no
 	window.doveIntroState = state;
 
 	window.doveIntroReady = function (info) {
+		window.doveIntroDone = true; // The game runs: the picture size watch starts.
 		if (!info || !info.on) { canvas.remove(); running = false; return; }
 		handed = {p: info.p, at: (performance.now() - start) / 1000};
 		canvas.style.opacity = '0';
@@ -189,7 +215,7 @@ body { color: white; background-color: black; overflow: hidden; touch-action: no
 </script>
 <script src="index.js"></script>
 <script>
-const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","mainPack":"game-70cb4687dbc59f17.pck","experimentalVK":false,"fileSizes":{"game-70cb4687dbc59f17.pck":20762616,"index.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","mainPack":"game-d36ca1581122b3a9.pck","experimentalVK":false,"fileSizes":{"game-d36ca1581122b3a9.pck":20762600,"index.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
 const GODOT_THREADS_ENABLED = false;
 const engine = new Engine(GODOT_CONFIG);
 
