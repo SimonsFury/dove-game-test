@@ -30,6 +30,17 @@ body { color: white; background-color: black; overflow: hidden; touch-action: no
 <div id="status-notice"></div>
 
 <script>
+// Big screens (Simon's 4K monitor, 3 Nov): the game draws at most MAX_TALL real pixels tall and the
+// browser scales the picture up. Godot sizes its canvas from devicePixelRatio, so it reads the
+// capped value; at 4K this draws less than half the pixels and the frame drops go.
+(function () {
+	const MAX_TALL = 1600;
+	const real = window.devicePixelRatio || 1;
+	const capped = () => Math.min(real, MAX_TALL / Math.max(window.innerHeight, 1));
+	try { Object.defineProperty(window, 'devicePixelRatio', {get: capped, configurable: true}); } catch (e) {}
+})();
+</script>
+<script>
 // The loading screen. The game reads window.doveIntro ({p: how far the water has sunk, t: the
 // screen's clock}) when it starts, draws the same moment, and calls window.doveIntroReady;
 // then this picture fades out over the game's own (the same scene, moving on together).
@@ -178,7 +189,7 @@ body { color: white; background-color: black; overflow: hidden; touch-action: no
 </script>
 <script src="index.js"></script>
 <script>
-const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","mainPack":"game-035ba1654c4e3d29.pck","experimentalVK":false,"fileSizes":{"game-035ba1654c4e3d29.pck":18560712,"index.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","mainPack":"game-70cb4687dbc59f17.pck","experimentalVK":false,"fileSizes":{"game-70cb4687dbc59f17.pck":20762616,"index.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
 const GODOT_THREADS_ENABLED = false;
 const engine = new Engine(GODOT_CONFIG);
 
