@@ -49,7 +49,7 @@ body { color: white; background-color: black; overflow: hidden; touch-action: no
 // screen's clock}) when it starts, draws the same moment, and calls window.doveIntroReady;
 // then this picture fades out over the game's own (the same scene, moving on together).
 (function () {
-	const I = {"bob":5.0,"logo":[110.0,120.0,500.0,220.0],"margin":120,"pivot":[-660.0,1430.0],"pixels":[1440,2700],"rise":200.0,"rock":0.012,"scene_y":340.0,"sky":"3a3557","text":{"de":"Das Wasser sinkt \u2026 {p} %","en":"The waters are going down \u2026 {p}%"},"view":[720,1800],"layers":{"back":[0,0,720.0,1800.0],"ark":[-120.0,628.0,804.6666666666666,880.0],"sea":[-64.66666666666666,1370.6666666666667,849.3333333333334,429.3333333333333],"front":[0.0,0.0,720.0,357.3333333333333]},"sea_bottom":"#0b1b2a","font":["font.woff2","woff2"],"files":["back.webp","ark.webp","sea.webp","front.webp","logo.webp","font.woff2"]};
+	const I = {"bob":5.0,"logo":[110.0,120.0,500.0,220.0],"margin":120,"pivot":[-660.0,1430.0],"pixels":[1440,2700],"rise":200.0,"rock":0.012,"scene_y":340.0,"sky":"3a3557","text":{"de":"Das Wasser sinkt \u2026 {p} %","en":"The waters are going down \u2026 {p}%"},"view":[720,1800],"layers":{"back":[0,0,720.0,1800.0],"ark":[-120.0,628.0,804.6666666666666,880.0],"sea":[-70.66666666666666,1370.6666666666667,861.3333333333334,429.3333333333333],"front":[0.0,0.0,720.0,357.3333333333333]},"sea_bottom":"#0b1b29","font":["font.woff2","woff2"],"files":["back.webp","ark.webp","sea.webp","front.webp","logo.webp","font.woff2"]};
 	const canvas = document.getElementById('intro');
 	if (!I) { canvas.remove(); return; }
 	const ctx = canvas.getContext('2d');
@@ -200,7 +200,7 @@ body { color: white; background-color: black; overflow: hidden; touch-action: no
 </script>
 <script src="index.js"></script>
 <script>
-const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","mainPack":"game-af41495a5e70119e.pck","experimentalVK":false,"fileSizes":{"game-af41495a5e70119e.pck":20765720,"index.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","mainPack":"game-071ff3815f41ee8e.pck","experimentalVK":false,"fileSizes":{"game-071ff3815f41ee8e.pck":21616632,"index.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
 const GODOT_THREADS_ENABLED = false;
 const engine = new Engine(GODOT_CONFIG);
 
