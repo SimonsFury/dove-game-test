@@ -67,7 +67,7 @@ body { color: white; background-color: black; overflow: hidden; touch-action: no
 	const start = performance.now();
 	let shown = 0;
 	let handed = null; // {p, at}: the game has taken over (the last part sinks as in main.gd).
-	const state = {download: 0, started: false};
+	const state = {download: 0, started: false, downloaded: 0};
 	window.doveIntro = {p: 0, t: 0};
 	window.doveIntroState = state;
 
@@ -86,9 +86,16 @@ body { color: white; background-color: black; overflow: hidden; touch-action: no
 			const k = Math.min(Math.max((t - handed.at) / settle, 0), 1);
 			return handed.p + (1 - handed.p) * (1 - (1 - k) * (1 - k));
 		}
-		let real = 0.8 * state.download;
-		if (state.started) real = Math.max(real, 0.85);
-		if (typeof window.doveBoot === 'number') real = Math.max(real, 0.85 + 0.07 * window.doveBoot);
+		// The download fills the first two thirds. After it the browser still compiles and starts
+		// the game, which tells nothing about its progress, so the bar keeps creeping on towards
+		// 96 % (fast, then slower) instead of sitting still (Simon, 5 Nov: it looked stuck at 80 %).
+		let real = 0.65 * state.download;
+		if (state.download >= 1) {
+			if (!state.downloaded) state.downloaded = t;
+			real = 0.65 + 0.31 * (1 - Math.exp(-(t - state.downloaded) / 4.0));
+		}
+		if (state.started) real = Math.max(real, 0.88);
+		if (typeof window.doveBoot === 'number') real = Math.max(real, 0.88 + 0.08 * window.doveBoot);
 		shown = Math.max(shown, Math.min(real, t / MIN_TIME));
 		return shown;
 	}
@@ -193,7 +200,7 @@ body { color: white; background-color: black; overflow: hidden; touch-action: no
 </script>
 <script src="index.js"></script>
 <script>
-const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","mainPack":"game-1309bf8de1d35dfe.pck","experimentalVK":false,"fileSizes":{"game-1309bf8de1d35dfe.pck":20768456,"index.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","mainPack":"game-af41495a5e70119e.pck","experimentalVK":false,"fileSizes":{"game-af41495a5e70119e.pck":20765720,"index.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
 const GODOT_THREADS_ENABLED = false;
 const engine = new Engine(GODOT_CONFIG);
 
