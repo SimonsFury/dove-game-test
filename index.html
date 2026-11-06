@@ -55,10 +55,22 @@ body { color: white; background-color: black; overflow: hidden; touch-action: no
 	const ctx = canvas.getContext('2d');
 	const MIN_TIME = 1.4; // The water takes at least this long to sink to the game's part.
 	const images = {};
-	const picture = (name) => { const im = new Image(); im.decoding = 'async'; im.onerror = () => { im.failed = true; }; im.src = 'intro-' + name; images[name] = im; };
+	const picture = (name, first) => new Promise((done) => {
+		const im = new Image();
+		im.decoding = 'async';
+		if (first) im.fetchPriority = 'high';
+		im.onload = done;
+		im.onerror = () => { im.failed = true; done(); };
+		im.src = 'intro-' + name;
+		images[name] = im;
+	});
+	// The main pictures first, on their own: the game's big download waits for them (below), so the
+	// loading screen shows at once (Simon, 6 Nov: one colour and the logo until 66 %). The frames of
+	// the animals' small moves follow.
 	const MAIN = ['back.webp', 'ark.webp', 'sea.webp', 'front.webp', 'logo.webp', 'dove.webp', 'giraffe-breathe-0.webp'];
-	MAIN.forEach(picture);
-	I.files.filter((f) => f.endsWith('.webp') && !MAIN.includes(f)).forEach(picture); // After the main ones.
+	window.doveIntroFirst = Promise.all(MAIN.map((name) => picture(name, true))).then(() => {
+		I.files.filter((f) => f.endsWith('.webp') && !MAIN.includes(f)).forEach((name) => picture(name, false));
+	});
 	let fontReady = false;
 	try {
 		const font = new FontFace('DoveIntro', 'url(intro-' + I.font[0] + ') format("' + I.font[1] + '")');
@@ -259,11 +271,12 @@ const engine = new Engine(GODOT_CONFIG);
 			displayFailureNotice('Error\nThe following features required to run Godot projects on the Web are missing:\n' + missing.join('\n'));
 		}
 	} else {
-		engine.startGame({
+		// The game's download starts once the loading screen's main pictures are in (at most 3 s later).
+		Promise.race([window.doveIntroFirst || Promise.resolve(), new Promise((go) => setTimeout(go, 3000))]).then(() => engine.startGame({
 			'onProgress': function (current, total) {
 				if (current > 0 && total > 0) intro.download = current / total;
 			},
-		}).then(() => { intro.started = true; }, displayFailureNotice);
+		})).then(() => { intro.started = true; }, displayFailureNotice);
 	}
 }());
 </script>
