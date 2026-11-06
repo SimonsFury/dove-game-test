@@ -56,7 +56,9 @@ body { color: white; background-color: black; overflow: hidden; touch-action: no
 	const MIN_TIME = 1.4; // The water takes at least this long to sink to the game's part.
 	const images = {};
 	const picture = (name) => { const im = new Image(); im.decoding = 'async'; im.onerror = () => { im.failed = true; }; im.src = 'intro-' + name; images[name] = im; };
-	I.files.filter((f) => f.endsWith('.webp')).forEach(picture);
+	const MAIN = ['back.webp', 'ark.webp', 'sea.webp', 'front.webp', 'logo.webp', 'dove.webp', 'giraffe-breathe-0.webp'];
+	MAIN.forEach(picture);
+	I.files.filter((f) => f.endsWith('.webp') && !MAIN.includes(f)).forEach(picture); // After the main ones.
 	let fontReady = false;
 	try {
 		const font = new FontFace('DoveIntro', 'url(intro-' + I.font[0] + ') format("' + I.font[1] + '")');
@@ -144,13 +146,16 @@ body { color: white; background-color: black; overflow: hidden; touch-action: no
 		ctx.clip();
 		ctx.fillStyle = '#' + I.sky;
 		ctx.fillRect(0, 0, 720, vh);
-		if (!Object.values(images).every((im) => ready(im) || im.failed)) { ctx.restore(); return; } // The plain sky until every picture is in (no piecemeal start).
+		// The plain sky until the main pictures are in (no piecemeal start); the frames of the animals'
+		// small moves follow, each shown once it has arrived (until then they rest).
+		if (!MAIN.every((name) => ready(images[name]) || (images[name] && images[name].failed))) { ctx.restore(); return; }
 		// Stage test links (?trip=N) start in other weather: the game draws that scene itself.
 		if (plain) { ctx.restore(); drawTop(p, vh); return; }
 		const dy = Math.max(vh - 1280, 0) / 2 + 80 - I.scene_y; // The start screen sits 80 higher (TITLE_RAISE).
 		const rise = I.rise * (1 - p);
 		const L = I.layers;
 		const at = (name, y) => { if (ready(images[name + '.webp'])) ctx.drawImage(images[name + '.webp'], L[name][0], L[name][1] + y, L[name][2], L[name][3]); };
+		const pose = (name, rest) => ready(images[name + '.webp']) ? name : rest;
 		at('back', dy - rise);
 		// The ark rides the water: it bobs and rocks about a point on the water line (ark_pose).
 		const px = I.pivot[0], py = I.pivot[1] + dy - rise;
@@ -161,8 +166,8 @@ body { color: white; background-color: black; overflow: hidden; touch-action: no
 		at('ark', dy - rise);
 		// The giraffe breathes and the dove sits on the bow, moving now and then (Simon, 5 Nov), by
 		// the same clock rules as main.gd (breath, loading_dove_move), so the game goes on seamlessly.
-		at('giraffe-breathe-' + Math.floor(((t / I.breathe[0]) % 1) * I.breathe[1]) % I.breathe[1], dy - rise);
-		at(doveFrame(t), dy - rise);
+		at(pose('giraffe-breathe-' + Math.floor(((t / I.breathe[0]) % 1) * I.breathe[1]) % I.breathe[1], 'giraffe-breathe-0'), dy - rise);
+		at(pose(doveFrame(t), 'dove'), dy - rise);
 		ctx.restore();
 		at('sea', dy - rise);
 		const seaEnd = L.sea[1] + L.sea[3] + dy - rise - 1;
@@ -218,7 +223,7 @@ body { color: white; background-color: black; overflow: hidden; touch-action: no
 </script>
 <script src="index.js"></script>
 <script>
-const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","mainPack":"game-ee649fc661cacc36.pck","experimentalVK":false,"fileSizes":{"game-ee649fc661cacc36.pck":32109880,"index.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","mainPack":"game-28d689a0e52d0591.pck","experimentalVK":false,"fileSizes":{"game-28d689a0e52d0591.pck":32110024,"index.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
 const GODOT_THREADS_ENABLED = false;
 const engine = new Engine(GODOT_CONFIG);
 
